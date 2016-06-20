@@ -30,7 +30,7 @@ satHeight_km = 715
 kmPerBlend = 300
 verticalMag = 10
 colorScheme = 'cloud_phase_3x3'
-pickleLocation = "/Users/John/Desktop/JPL"
+pickleLocation = "/Users/John/GitHub/JPL2016"
 layers_tfff=(True, False, False, False, False, False, False, False, False, False,
                 False, False, False, False, False, False, False, False, False, False)
 
@@ -167,7 +167,7 @@ def ObjectCreation():
                 zcl_km = zcl_feet * 0.3048 * 0.001
                 zcl = (verticalMag * zcl_km) / kmPerBlend
 
-                if cl == 0:
+                if icl == 0:
                     # the cloud fraction of the first (top) cloud layer can be used as-is
                     frac = CldFrcStd[isc, ifp, icl]
                 else:
@@ -181,19 +181,22 @@ def ObjectCreation():
                 # express cloud fraction as optical depth
                 if frac > 0.9999546:
                     opticalDepth = 10
-                else:fdf
+                else:
                     opticalDepth = np.log(1.0 / (1.0 - frac))
 
+                radius = 0.02
                 # assume cloud thickness relates to optical depth
-                thickness = 0.02 * optical_depth
+                thickness = 0.02 * opticalDepth
+
+                #Radius = horizontal_decimation * xsmear * hmag * xelong
+                mesh.primitive_cylinder_add(radius = radius, depth = thickness, view_align = False, enter_editmode = False, location=(xfp, ysc, (zcl - thickness / 2.0)))
 
                 xsmear = 1.25
                 hmag = 1.0 / np.cos(scanang_rad)
                 xelong = 1.0 / np.cos(scanang_rad)
-                radius = (horizontal_decimation * xsmear * hmag * xelong) / 30
 
-                #Radius = horizontal_decimation * xsmear * hmag * xelong
-                mesh.primitive_cylinder_add(radius = radius, view_align=False, enter_editmode=False, location=(xfp, ysc, zcl))
+                bpy.context.object.scale = (horizontal_decimation * xsmear * hmag * xelong, horizontal_decimation * hmag, 1.0)
+                bpy.ops.object.transform_apply(scale = True)
 
                 if merge == True:
                     for ob in bpy.context.scene.objects:
@@ -207,9 +210,7 @@ def ObjectCreation():
                 if objectsToClouds == True:
                     bpy.ops.cloud.generate_cloud()
 
-
-        print("****** \nIt took " + str((time.time()) - cloudTime) + " to generate clouds #", + (isc + 1))
-
 clearScene()
 setup()
 ObjectCreation()
+print("****** \nIt took " + str((time.time()) - startTime) + "to generate scene.")
