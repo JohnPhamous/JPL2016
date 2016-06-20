@@ -181,7 +181,7 @@ def ObjectCreation():
                 # express cloud fraction as optical depth
                 if frac > 0.9999546:
                     opticalDepth = 10
-                else:
+                else:fdf
                     opticalDepth = np.log(1.0 / (1.0 - frac))
 
                 # assume cloud thickness relates to optical depth
