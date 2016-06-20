@@ -1,0 +1,9 @@
+./pickleclouds.py
+/opt/packages/blender-2.76b/blender --background --python cloud3.py -- \
+	--date 20020906 --gran 50 --sub 3 --colorby cloud_phase_3x3
+/opt/packages/blender-2.76b/blender --background --python cloud3.py -- \
+	--date 20020906 --gran 50 --sub 3
+/opt/packages/blender-2.76b/blender --background --python cloud3.py -- \
+	--date 20020906 --gran 50 --colorby cloud_phase_3x3
+/opt/packages/blender-2.76b/blender --background --python cloud3.py -- \
+	--date 20020906 --gran 50
