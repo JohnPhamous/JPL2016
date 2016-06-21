@@ -1,9 +1,9 @@
-#Adds in Manning's pickle reader
-
+# TODO: Add argparse, add automatic render functions, set up better lighting, set up cloud properties function
 import bpy, random, argparse, sys, time, pickle, os
 from random import randint
 import numpy as np
 from math import pi
+from tqdm import *
 
 #Short hands for common calls
 scene = bpy.context.scene
@@ -13,18 +13,22 @@ context = bpy.context
 object = bpy.ops.object
 ops = bpy.ops
 selected_object = bpy.context.active_object
+obj = scene.objects.active
 
-#General Parameters
-#Used to track how much time elapsed
+t = True
+f = False
+# General Parameters
+# Used to track how much time elapsed
 startTime = time.time()
-#Different lighting types: sun, area
+# Different lighting types: sun, area
 lightType = "sun"
-objectsToClouds = False
-merge = True
-render = True
+objectsToClouds = t
+merge = f
+applyCloudParameters = t
+
 date = "20020906"
 granule = "50"
-#1 all, 2 every other, 3 skips 2/3
+# 1 all, 2 every other, 3 skips 2/3
 horizontal_decimation = 3
 satHeight_km = 715
 kmPerBlend = 300
@@ -54,32 +58,34 @@ def setMaterial(obj, mat):
     return
 
 def setup():
-    #Light source setup
+    # Light source setup
     if lightType == "sun":
         object.lamp_add(type = 'SUN', radius = 1, view_align = False, location = (-1, -32, 18))
     elif lightType == "area":
         object.lamp_add(type = 'AREA', radius = 1, view_align = False, location = (-1, -32, 18))
-    #Camera initialized
-    object.camera_add(view_align = True, enter_editmode = False, location = (0, -10, 10))
-    #Sets camera rotation
+    # Camera initialized
+    object.camera_add(view_align = True, enter_editmode = False, location = (0, -15, 3))
+    # Sets camera rotation
     ops.transform.rotate(value = 1.16299, axis = (1, 0, 0), constraint_axis = (True, False, False), constraint_orientation = 'GLOBAL', mirror = False, proportional = 'DISABLED', proportional_edit_falloff = 'SMOOTH', proportional_size = 1)
-    #Earth plane created
-    '''mesh.primitive_plane_add(radius = 5, view_align = False, enter_editmode = False, location = (0, 0, -1), layers = layers_tfff)
-    setMaterial(context.object, blue)
-    bpy.context.object.active_material.use_raytrace = False
-    bpy.context.object.active_material.use_mist = False
-    bpy.context.object.active_material.use_cast_shadows = False
-    bpy.context.object.active_material.use_cast_buffer_shadows = False
-    bpy.context.object.active_material.use_cast_approximate = False'''
     return
 
-def baseObject(x,y,z):
-    #Creates base cylinder
-    mesh.primitive_cylinder_add(location=(x,y,z))
+def earthSetup():
+    # TODO: Add Earth texture
+    mesh.primitive_plane_add(radius = 5, view_align = False, enter_editmode = False, location = (0, 0, -1), layers = layers_tfff)
+    setMaterial(context.object, blue)
+    context.object.active_material.use_raytrace = False
+    context.object.active_material.use_mist = False
+    context.object.active_material.use_cast_shadows = False
+    context.object.active_material.use_cast_buffer_shadows = False
+    context.object.active_material.use_cast_approximate = False
+    bpy.ops.texture.new()
+    bpy.data.textures["Texture.001"].type = 'CLOUDS'
+
+
     return
 
 def clearScene():
-    #Clears the current scene
+    # Clears the current scene
     for obj in scene.objects:
         scene.objects.unlink(obj)
         bpy.data.objects.remove(obj)
@@ -92,20 +98,23 @@ def randomNum(min, max):
 
 def joinObjects():
     #Merges all of the created objects
-    for ob in bpy.context.scene.objects:
+    for ob in context.scene.objects:
         if ob.type == 'MESH':
             ob.select = True
-            bpy.context.scene.objects.active = ob
+            context.scene.objects.active = ob
         else:
             ob.select = False
-        bpy.ops.object.join()
+        ops.object.join()
+    return
+
+def cloudParameters():
+    # TODO:
     return
 
 def ObjectCreation():
-    #Makes clouds
-    counter = 0
-    obj = scene.objects.active
+    # can't currently read AIRS HDF files from python 3, so get them from a pickle file created using python 2.7
     os.chdir(pickleLocation)
+    # Pickle stuff by Evan Manning
     pkl_file=open('clouds.20020906G050.pkl', 'rb')
     CldFrcTot = pickle.load(pkl_file,fix_imports=True,encoding='bytes')
     CldFrcTot_QC = pickle.load(pkl_file,fix_imports=True,encoding='bytes')
@@ -137,8 +146,8 @@ def ObjectCreation():
     ice_cld_fit_reduced_chisq = pickle.load(pkl_file,fix_imports=True,encoding='bytes')
     pkl_file.close()
 
-    for isc in range(horizontal_decimation // 2, 135, horizontal_decimation):
-    #for isc in range(1):
+    #for isc in tqdm(range(horizontal_decimation // 2, 135, horizontal_decimation), desc='Creating objects', leave = True):
+    for isc in tqdm(range(1)):
         cloudTime = time.time()
         ysc_km = (isc - 135.0/2.0) * 15.0
         ysc = ysc_km / kmPerBlend
@@ -184,33 +193,39 @@ def ObjectCreation():
                 else:
                     opticalDepth = np.log(1.0 / (1.0 - frac))
 
-                radius = 0.02
                 # assume cloud thickness relates to optical depth
                 thickness = 0.02 * opticalDepth
-
                 #Radius = horizontal_decimation * xsmear * hmag * xelong
-                mesh.primitive_cylinder_add(radius = radius, depth = thickness, view_align = False, enter_editmode = False, location=(xfp, ysc, (zcl - thickness / 2.0)))
+                mesh.primitive_cylinder_add(radius = 0.02, depth = thickness, view_align = False, enter_editmode = False, location=(xfp, ysc, (zcl - thickness / 2.0)))
 
                 xsmear = 1.25
-                hmag = 1.0 / np.cos(scanang_rad)
-                xelong = 1.0 / np.cos(scanang_rad)
+                hmag_xelong = 1.0 / np.cos(scanang_rad)
 
-                bpy.context.object.scale = (horizontal_decimation * xsmear * hmag * xelong, horizontal_decimation * hmag, 1.0)
-                bpy.ops.object.transform_apply(scale = True)
+                context.object.scale = (horizontal_decimation * xsmear * hmag_xelong * hmag_xelong, horizontal_decimation * hmag_xelong, 1.0)
+                object.transform_apply(scale = True)
 
-                if merge == True:
-                    for ob in bpy.context.scene.objects:
-                        if ob.type == 'MESH':
-                            ob.select = True
-                            bpy.context.scene.objects.active = ob
-                        else:
-                            ob.select = False
-                        bpy.ops.object.join()
+                if objectsToClouds:
+                    ops.cloud.generate_cloud()
+                    # Sets transparency of cloud based on a factor of the thickness
+                    bpy.context.object.active_material.volume.density_scale = thickness * 10
+                    bpy.context.object.active_material.volume.transmission_color = (randomNum(0, 5), randomNum(0 ,5), randomNum(0, 5))
 
-                if objectsToClouds == True:
-                    bpy.ops.cloud.generate_cloud()
 
+print("\nStarting visualization...")
+print("Clearing original scene...")
 clearScene()
+print("Setting up new scene...")
 setup()
 ObjectCreation()
-print("****** \nIt took " + str((time.time()) - startTime) + "to generate scene.")
+
+if merge:
+    print("Merging all objects...")
+    joinObjects()
+
+earthSetup()
+
+print("\nTime(seconds)__________", (time.time()) - startTime)
+print("Clouds_________________", objectsToClouds)
+print("Light__________________", lightType)
+print("Granule________________", granule)
+print("Horizontal Decimation__", horizontal_decimation)
