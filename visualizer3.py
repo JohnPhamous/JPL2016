@@ -15,8 +15,8 @@ applyCloudParameters = False
 camera1 = True
 camera2 = False
 camera3 = False
-colorObjects = False
-testingObject = True
+colorObjects = True
+testingObject = False
 
 date = "20020906"
 granule = "50"

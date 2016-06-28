@@ -12,20 +12,33 @@ concentrate = true;
 				<tr><td>Function call which returns no value</td><td>&#8594;</td></tr>
 				<tr><td>Function call returns some value</td><td><font color='blue'>&#8594;</font></td></tr>
 				</table></td></tr></table>
-				>];}node1 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "26: cloud4.makeMaterial" ];
-node2 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "40: cloud4.setMaterial" ];
-node3 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "46: cloud4.render_and_save" ];
-node4 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "82: cloud4.phasecolor" ];
-node5 [splines=ortho shape = "rect" style = "rounded" label = "101: cloud4.make_clouds" ];
-node6 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "0: cloud4.(cloud4 module frame (runs on import))" ];
-node5 -> node1 [color="blue" penwidth="2"];
-node5 -> node2;
-node5 -> node4 [color="blue" penwidth="2"];
-node6 -> node3;
-node6 -> node5;
-subgraph clustercloud40{
-node1 node2 node3 node4 node5 node6 ;
-label="cloud4";
+				>];}node1 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "34: visualizer3.makeMaterial" ];
+node2 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "50: visualizer3.setMaterial" ];
+node3 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "55: visualizer3.setup" ];
+node4 [splines=ortho shape = "rect" style = "rounded" label = "89: visualizer3.earthSetup" ];
+node5 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "116: visualizer3.clearScene" ];
+node7 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "130: visualizer3.joinObjects" ];
+node8 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "green" label = "141: visualizer3.objectToClouds" ];
+node10 [splines=ortho shape = "rect" style = "rounded" label = "152: visualizer3.testObject" ];
+node11 [splines=ortho shape = "rect" style = "rounded" label = "170: visualizer3.ObjectCreation" ];
+node12 [splines=ortho shape = "rect" style = "rounded,filled" fillcolor = "coral" label = "0: visualizer3.(visualizer3 module frame (runs on import))" ];
+node4 -> node1 [color="blue" penwidth="2"];
+node4 -> node2 [color="blue" penwidth="2"];
+node10 -> node1 [color="blue" penwidth="2"];
+node10 -> node2 [color="blue" penwidth="2"];
+node11 -> node1 [color="blue" penwidth="2"];
+node11 -> node2 [color="blue" penwidth="2"];
+node11 -> node8;
+node12 -> node1 [color="blue" penwidth="2"];
+node12 -> node3 [color="blue" penwidth="2"];
+node12 -> node4 [color="blue" penwidth="2"];
+node12 -> node5 [color="blue" penwidth="2"];
+node12 -> node7 [color="blue" penwidth="2"];
+node12 -> node10 [color="blue" penwidth="2"];
+node12 -> node11;
+subgraph clustervisualizer30{
+node1 node2 node3 node4 node5 node7 node8 node10 node11 node12 ;
+label="visualizer3";
 style=filled;
 color=black;
 graph[style=dotted];
