@@ -1,0 +1,35 @@
+Machine Learning and Instrument Autonomy
+6/23/16
+Dr. Tara Estlin //Introduced seminar
+
+Charter:
+    Using machine learning for onboard instrument autonomy and science data processing
+
+Seminar 1: Enabling Content-Based Search of Orbital Image Data
+    Kiri L. Wagstaff
+Machine Learning:
+    Summary:
+        Using machine learning to classify interesting surface landmarks on Mars.
+    TODO: Planetary Image Atlas
+    ? Supervised Learning vs Unsupervised Learning?
+        They're working on it
+    ? How do you deal with a class with a variety of details?
+
+Seminar 2: Saving the Best Data by Pre-Judging Less
+Lucas Mandrake
+    Summary: DOGO can judge data based on flags. Those that pass the flags are considered good data and those that fail and removed from the data set. It allows the user to set the amount and types of flags and in turn fine tune the data set to what matters for their application.
+
+    OCO2 is a satellite tracking the CO2 in the atmosphere
+    Data collected for 1.5 years and resulted in 87GB   //Called medium data rather than big
+    Using sub-selecting, you process data with certain flags
+    Using an algorithm to predict if observations should be kept for future use in any cases
+    Most missions cut off 75% of total data due to memory constraints
+    Data Ordering Genetic Optimization (DOGO)
+        Winner JPL Software of the Year
+        Runner-Up NASA Software of the Year
+        Inputs:
+            Observations + Metadata
+            Truth/Confirmed data
+        Outputs:
+            Confidence/Warn levels
+            Informative Metadata
