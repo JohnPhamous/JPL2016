@@ -1,5 +1,3 @@
-# TODO: Add argparse, add automatic render functions, set up better
-# lighting, set up cloud properties function
 import bpy, random, argparse, sys, time, pickle, os
 from random import randint
 import numpy as np
@@ -9,14 +7,12 @@ from tqdm import *
 # Used to track how much time elapsed
 startTime = time.time()
 
-objectsToClouds = False
-merge = False
-applyCloudParameters = False
 camera1 = True
 camera2 = False
 camera3 = False
-colorObjects = True
-testingObject = False
+colorObjectsSwitch = True
+testingObjectSwitch = True
+boundingBoxSwitch = True
 
 date = "20020906"
 granule = "50"
@@ -29,7 +25,8 @@ colorScheme = 'cloud_phase_3x3'
 pickleLocation = "/Users/John/GitHub/JPL2016"
 layers_tfff = (True, False, False, False, False, False, False, False, False, False,
                False, False, False, False, False, False, False, False, False, False)
-
+originX = 0
+originY = 0
 
 def makeMaterial(name, diffuse, specular, thickness):
     mat = bpy.data.materials.new(name)
@@ -44,13 +41,13 @@ def makeMaterial(name, diffuse, specular, thickness):
 
 
 # Color Paremeters
-blue = makeMaterial('BlueSemi', (0, 0, 1), (0.5, 0.5, 0.5), 1)
+blue = (0, 0, 1)
+red = (1, 0, 0)
 
 
 def setMaterial(obj, mat):
     obj.data.materials.append(mat)
     return
-
 
 def setup():
     # Light source setup
@@ -64,24 +61,6 @@ def setup():
             view_align=True, enter_editmode=False, location=(0, -15, 5))
         bpy.ops.transform.rotate(value=1.16299, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL',
                              mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
-    if camera2:
-        # 45 down angle
-        bpy.ops.object.camera_add(
-            view_align=True, enter_editmode=False, location=(8, -8, 3))
-        bpy.ops.transform.rotate(value=1.36011, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL',
-                                 mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
-        bpy.ops.transform.rotate(value=0.8, axis=(0, 0, 1), constraint_axis=(False, False, True), constraint_orientation='GLOBAL',
-                                 mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
-    if camera3:
-        # Side
-        bpy.ops.object.camera_add(view_align=True, enter_editmode=False,
-                          location=(12.5, -.3, 4))
-        bpy.ops.transform.rotate(value=1.5, axis=(0, 1, 0), constraint_axis=(False, False, True), constraint_orientation='GLOBAL',
-                                 mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
-        bpy.ops.transform.rotate(value=1.25489, axis=(0, 1, 0), constraint_axis=(False, True, False), constraint_orientation='GLOBAL',
-                                 mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
-        bpy.ops.transform.rotate(value=0.0840454, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL',
-                                 mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
     return
 
 
@@ -96,6 +75,8 @@ def earthSetup():
     matProperties = makeMaterial('Globe', (0, 1, 0.8), (1, 1, 1), (1))
     matProperties.specular_intensity = 0
     setMaterial(bpy.context.object, matProperties)
+    bpy.context.object.active_material.use_cast_shadows = False
+    bpy.context.object.active_material.use_cast_buffer_shadows = False
 
     earthTexturePath = os.path.expanduser('/Users/John/Github/JPL2016/Additionals/Textures/earth.jpg')
     img = bpy.data.images.load(earthTexturePath)
@@ -124,35 +105,11 @@ def randomNum(min, max):
     num = round(random.uniform(min, max), 10)
     return num
 
-
-def joinObjects():
-    # Merges all of the created objects
-    for ob in context.scene.objects:
-        if ob.type == 'MESH':
-            ob.select = True
-            bpy.context.scene.objects.active = ob
-        else:
-            ob.select = False
-        ops.object.join()
-    return
-
-
-def objectToClouds():
-    bpy.ops.cloud.generate_cloud()
-    # Sets transparency of cloud based on a factor of the thickness
-    #bpy.context.object.active_material.volume.density_scale = thickness * 10
-    #bpy.context.object.active_material.volume.transmission_color = (randomNum(0, 5), randomNum(0 ,5), randomNum(0, 5))
-
-def cloudParameters():
-    # TODO:
-    return
-
-
 def testObject():
     bpy.ops.mesh.primitive_cylinder_add(radius=(1), depth=(
         1), view_align=False, enter_editmode=False, location=(0, 0, 0))
     matProperties = makeMaterial(
-        'BlueSemi', (0, .25, 1), (0.5, 0.5, 0.5), (10))
+        'BlueSemi', (0, .25, 1), (0.5, 0.5, 0.5), (1))
     setMaterial(bpy.context.object, matProperties)
     bpy.context.object.active_material.use_transparency = True
     bpy.context.object.active_material.transparency_method = 'RAYTRACE'
@@ -163,6 +120,27 @@ def testObject():
     bpy.context.object.active_material.subsurface_scattering.use = True
     return
 
+
+def boundingBox(originX, originY):
+    # TODO: Set 10 x 10 bounding area around clouds
+    # max is 100 mBar, tropapoz, if under 0 mBar clouds are ignored
+    x = originX
+    y = originY
+    for i in range(6):
+        for j in range(8):
+            bpy.ops.mesh.primitive_cube_add(radius = 0.5, location=(x, y, 0))
+            boxProperties = makeMaterial('BoundingBox', (red), (0.5, 0.5, 0.5), (1))
+            setMaterial(bpy.context.object, boxProperties)
+            bpy.context.object.active_material.type = 'WIRE'
+            bpy.context.object.active_material.use_shadeless = True
+            bpy.context.object.active_material.use_shadows = False
+            bpy.context.object.active_material.use_ray_shadow_bias = False
+            bpy.context.object.active_material.use_cast_shadows = False
+            bpy.context.object.active_material.use_cast_buffer_shadows = False
+            y += 1
+        x += 1
+        y = originY
+    return
 
 def ObjectCreation():
     # can't currently read AIRS HDF files from python 3, so get them from a
@@ -211,8 +189,11 @@ def ObjectCreation():
         pkl_file, fix_imports=True, encoding='bytes')
     pkl_file.close()
 
+    counter = 0
+
     for isc in tqdm(range(horizontal_decimation // 2, 135, horizontal_decimation), desc='Creating objects', leave=True):
-        # for isc in range(1):
+    #for isc in range(1):
+
         cloudTime = time.time()
         ysc_km = (isc - 135.0 / 2.0) * 15.0
         ysc = ysc_km / kmPerBlend
@@ -256,11 +237,13 @@ def ObjectCreation():
                     frac = CldFrcStd[isc, ifp, icl] / \
                         (1.0 - CldFrcStd[isc, ifp, 0])
 
-                # express cloud fraction as optical depth
+                # express cloud fraction as IR optical depth
                 if frac > 0.9999546:
                     opticalDepth = 10
                 else:
                     opticalDepth = np.log(1.0 / (1.0 - frac))
+
+                # Visible optical depth = IR * 4
 
                 # assume cloud thickness relates to optical depth
                 thickness = 0.02 * opticalDepth
@@ -269,7 +252,7 @@ def ObjectCreation():
                 bpy.ops.mesh.primitive_cylinder_add(radius=(0.02 / smallFactor), depth=(thickness / smallFactor),
                                             view_align=False, enter_editmode=False, location=(xfp, ysc, (zcl - thickness / 2.0)))
 
-                if colorObjects:
+                if colorObjectsSwitch:
                     if thickness < .01:
                         thickness * 100
                     #matProperties = makeMaterial('BlueSemi', (0, .25, 1), (0.5, 0.5, 0.5), (thickness * 10))
@@ -294,8 +277,13 @@ def ObjectCreation():
                                         hmag_xelong, horizontal_decimation * hmag_xelong, 1.0)
                 bpy.ops.object.transform_apply(scale=True)
 
-                if objectsToClouds:
-                    objectToClouds()
+                # Setup for bonding boxes
+                global originX
+                global originY
+                if counter == 0:
+                    originX = xfp
+                    originY = ysc
+                    counter += 1
 
 print("\nStarting visualization...")
 print("Clearing original scene...")
@@ -303,18 +291,16 @@ clearScene()
 print("Setting up new scene...")
 setup()
 
-if testingObject:
+if testingObjectSwitch:
     testObject()
 else:
     ObjectCreation()
 
-if merge:
-    print("Merging all objects...")
-    joinObjects()
-
 earthSetup()
+
+if boundingBoxSwitch:
+    print("Creating bounding boxes")
+    boundingBox(originX, originY)
 
 print("\nTime(seconds)__________", (time.time()) - startTime)
 print("Granule________________", granule)
-print("Horizontal Decimation__", horizontal_decimation)
-print("Clouds_________________", objectsToClouds)
