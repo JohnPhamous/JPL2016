@@ -122,13 +122,16 @@ def testObject():
 
 
 def boundingBox(originX, originY):
-    # TODO: Set 10 x 10 bounding area around clouds
     # max is 100 mBar, tropapoz, if under 0 mBar clouds are ignored
     x = originX
     y = originY
+    bpy.ops.mesh.primitive_cube_add(radius = 0.5)
+
+    # Creates bounding boxes in x
     for i in range(6):
+        # Creates boudning boxes in y
         for j in range(8):
-            bpy.ops.mesh.primitive_cube_add(radius = 0.5, location=(x, y, 0))
+            bpy.context.scene.objects.active.location = (x, y, 0)
             boxProperties = makeMaterial('BoundingBox', (red), (0.5, 0.5, 0.5), (1))
             setMaterial(bpy.context.object, boxProperties)
             bpy.context.object.active_material.type = 'WIRE'
@@ -137,6 +140,11 @@ def boundingBox(originX, originY):
             bpy.context.object.active_material.use_ray_shadow_bias = False
             bpy.context.object.active_material.use_cast_shadows = False
             bpy.context.object.active_material.use_cast_buffer_shadows = False
+
+            # Copies mesh data to create new bounding boxes
+            obj = bpy.context.scene.objects.active.copy()
+            obj.data = bpy.context.scene.objects.active.data.copy()
+            bpy.context.scene.objects.link(obj)
             y += 1
         x += 1
         y = originY
