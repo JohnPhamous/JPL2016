@@ -23,6 +23,8 @@ kmPerBlend = 300
 verticalMag = 10
 colorScheme = 'cloud_phase_3x3'
 pickleLocation = "/Users/John/GitHub/JPL2016"
+aqua = "/Users/John/Github/JPL2016/Additionals/Models/Aqua.fbx"
+
 layers_tfff = (True, False, False, False, False, False, False, False, False, False,
                False, False, False, False, False, False, False, False, False, False)
 originX = 0
@@ -147,6 +149,13 @@ def boundingBox(originX, originY):
             y += 1
         x += 1
         y = originY
+    return
+
+def importModel(aqua):
+    bpy.ops.import_scene.fbx(filepath=aqua, global_scale=0.5)
+    bpy.ops.transform.rotate(value=-0.75, axis=(0, 1, 0), constraint_axis=(False, True, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
+
+    bpy.ops.transform.translate(value=(4, 0, 3), constraint_axis=(True, False, True), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
     return
 
 def ObjectCreation():
@@ -297,17 +306,11 @@ print("Clearing original scene...")
 clearScene()
 print("Setting up new scene...")
 setup()
-
-if testingObjectSwitch:
-    testObject()
-else:
-    ObjectCreation()
-
+testObject()
+ObjectCreation()
 earthSetup()
-
-if boundingBoxSwitch:
-    print("Creating bounding boxes")
-    boundingBox(originX, originY)
+importModel(aqua)
+boundingBox(originX, originY)
 
 print("\nTime(seconds)__________", (time.time()) - startTime)
 print("Granule________________", granule)
