@@ -67,30 +67,72 @@ def setup():
 
 
 def earthSetup():
-    bpy.ops.mesh.primitive_uv_sphere_add()
+    # Sets up sphere
+    bpy.ops.mesh.primitive_uv_sphere_add(ring_count = 32, segments = 64)
     bpy.context.object.location[0] = 0
     bpy.context.object.location[1] = 6.5
     bpy.context.object.location[2] = -101.979
     bpy.context.object.scale[0] = 100
     bpy.context.object.scale[1] = 100
     bpy.context.object.scale[2] = 100
-    matProperties = makeMaterial('Globe', (0, 1, 0.8), (1, 1, 1), (1))
+    matProperties = makeMaterial('Globe', (1, 1, 1), (1, 1, 1), (1))
     matProperties.specular_intensity = 0
     setMaterial(bpy.context.object, matProperties)
     bpy.context.object.active_material.use_cast_shadows = False
+    bpy.context.object.active_material.diffuse_shader = 'MINNAERT'
+    bpy.context.object.active_material.use_transparent_shadows = True
+    bpy.context.object.active_material.darkness = 0.3
     bpy.context.object.active_material.use_cast_buffer_shadows = False
+    bpy.context.scene.world.horizon_color = (0, 0 ,0)
 
-    earthTexturePath = os.path.expanduser('/Users/John/Github/JPL2016/Additionals/Textures/earth.jpg')
+    # Applies Earth texture to sphere
+    earthTexturePath = os.path.expanduser('/Users/John/Github/JPL2016/Additionals/Textures/earth2.jpg')
     img = bpy.data.images.load(earthTexturePath)
-
     tex = bpy.data.textures.new('EarthTexture', type = 'IMAGE')
     tex.image = img
-
     atex = matProperties.texture_slots.add()
     atex.texture = tex
     atex.texture_coords = 'ORCO'
     atex.use_map_color_diffuse = True
-    atex.mapping ='FLAT'
+    atex.mapping ='SPHERE'
+    bpy.context.object.active_material.use_transparent_shadows = True
+
+
+    # Sets up heights of terrain
+    earthBumpTexturePath = os.path.expanduser('/Users/John/Github/JPL2016/Additionals/Textures/bump.jpg')
+    img2 = bpy.data.images.load(earthBumpTexturePath)
+    tex2 = bpy.data.textures.new('BumpTexture', type = 'IMAGE')
+    tex2.image = img2
+    atex2 = matProperties.texture_slots.add()
+    atex2.texture = tex2
+    atex2.mapping ='SPHERE'
+    atex2.texture_coords = 'ORCO'
+    atex2.use_map_color_diffuse = False
+    atex2.use_map_normal = True
+    atex2.normal_factor = -0.2
+    atex2.bump_method = 'BUMP_BEST_QUALITY'
+    bpy.context.object.active_material.use_transparent_shadows = True
+
+
+    # Sets up atmosphere
+    bpy.ops.mesh.primitive_uv_sphere_add(ring_count = 32, segments = 64)
+    bpy.context.object.location[0] = 0
+    bpy.context.object.location[1] = 6.5
+    bpy.context.object.location[2] = -101.979
+    bpy.context.object.scale[0] = 101
+    bpy.context.object.scale[1] = 101
+    bpy.context.object.scale[2] = 101
+    matAtmosphere = makeMaterial('Atmosphere', (0, 0.2, 1), (0, 0, 0), 1)
+    setMaterial(bpy.context.object, matAtmosphere)
+    bpy.context.object.active_material.use_transparency = True
+    bpy.context.object.active_material.transparency_method = 'Z_TRANSPARENCY'
+    bpy.context.object.active_material.raytrace_transparency.fresnel = 1.5
+    bpy.context.object.active_material.raytrace_transparency.fresnel_factor = 2.4
+    bpy.context.object.active_material.specular_intensity = 0
+    bpy.context.object.active_material.alpha = 0.2
+    bpy.context.object.active_material.use_transparent_shadows = True
+
+    bpy.ops.object.shade_smooth()
     return
 
 
@@ -306,7 +348,7 @@ print("Clearing original scene...")
 clearScene()
 print("Setting up new scene...")
 setup()
-testObject()
+#testObject()
 ObjectCreation()
 earthSetup()
 importModel(aqua)
