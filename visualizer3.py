@@ -11,7 +11,7 @@ camera1 = True
 camera2 = False
 camera3 = False
 colorObjectsSwitch = True
-testingObjectSwitch = True
+testingObjectSwitch = False
 boundingBoxSwitch = True
 
 date = "20020906"
@@ -126,21 +126,20 @@ def boundingBox(originX, originY):
     x = originX
     y = originY
     bpy.ops.mesh.primitive_cube_add(radius = 0.5)
+    boxProperties = makeMaterial('BoundingBox', (red), (0.5, 0.5, 0.5), (1))
+    setMaterial(bpy.context.object, boxProperties)
+    bpy.context.object.active_material.type = 'WIRE'
+    bpy.context.object.active_material.use_shadeless = True
+    bpy.context.object.active_material.use_shadows = False
+    bpy.context.object.active_material.use_ray_shadow_bias = False
+    bpy.context.object.active_material.use_cast_shadows = False
+    bpy.context.object.active_material.use_cast_buffer_shadows = False
 
     # Creates bounding boxes in x
     for i in range(6):
-        # Creates boudning boxes in y
+        # Creates bounding boxes in y
         for j in range(8):
             bpy.context.scene.objects.active.location = (x, y, 0)
-            boxProperties = makeMaterial('BoundingBox', (red), (0.5, 0.5, 0.5), (1))
-            setMaterial(bpy.context.object, boxProperties)
-            bpy.context.object.active_material.type = 'WIRE'
-            bpy.context.object.active_material.use_shadeless = True
-            bpy.context.object.active_material.use_shadows = False
-            bpy.context.object.active_material.use_ray_shadow_bias = False
-            bpy.context.object.active_material.use_cast_shadows = False
-            bpy.context.object.active_material.use_cast_buffer_shadows = False
-
             # Copies mesh data to create new bounding boxes
             obj = bpy.context.scene.objects.active.copy()
             obj.data = bpy.context.scene.objects.active.data.copy()
