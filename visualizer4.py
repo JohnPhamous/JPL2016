@@ -12,14 +12,13 @@ startTime = time.time()
 camera1 = True
 camera2 = False
 camera3 = False
-colorObjectsSwitch = True
+colorObjectsSwitch = False
 testingObjectSwitch = False
-boundingBoxSwitch = True
 
 date = "20020906"
 granule = "50"
 # 1 all, 2 every other, 3 skips 2/3
-horizontal_decimation = 3
+horizontal_decimation = 7
 satHeight_km = 715
 kmPerBlend = 300
 verticalMag = 10
@@ -210,6 +209,7 @@ def joinObjects():
         else:
             ob.select = False
         bpy.ops.object.join()
+    bpy.context.scene.cloud_type = '1'
     bpy.ops.cloud.generate_cloud()
     return
 
@@ -264,7 +264,7 @@ def ObjectCreation():
     counter = 0
 
     for isc in tqdm(range(horizontal_decimation // 2, 135, horizontal_decimation), desc='Creating objects', leave=True):
-    #for isc in range(1):
+    #for isc in range(10):
 
         cloudTime = time.time()
         ysc_km = (isc - 135.0 / 2.0) * 15.0
@@ -319,15 +319,14 @@ def ObjectCreation():
 
                 # assume cloud thickness relates to optical depth
                 thickness = 0.02 * opticalDepth
-                smallFactor = 1
-                #Radius = horizontal_decimation * xsmear * hmag * xelong
+                smallFactor = 10
+
                 bpy.ops.mesh.primitive_cylinder_add(radius=(0.02 / smallFactor), depth=(thickness / smallFactor),
                                             view_align=False, enter_editmode=False, location=(xfp, ysc, (zcl - thickness / 2.0)))
 
                 if colorObjectsSwitch:
                     if thickness < .01:
                         thickness * 100
-                    #matProperties = makeMaterial('BlueSemi', (0, .25, 1), (0.5, 0.5, 0.5), (thickness * 10))
                     matProperties = makeMaterial(
                         'White', (1, 1, 1), (0.5, 0.5, 0.5), (thickness * 10))
                     setMaterial(bpy.context.object, matProperties)
@@ -337,16 +336,12 @@ def ObjectCreation():
                     bpy.context.object.active_material.raytrace_transparency.depth = 50
                     bpy.context.object.active_material.raytrace_transparency.ior = 1.3
                     bpy.context.object.active_material.raytrace_transparency.fresnel_factor = 1.25
-                    #bpy.context.object.active_material.subsurface_scattering.use = True
-                    # bpy.ops.script.python_file_run(filepath="/Applications/blender.app/Contents/Resources/2.77/scripts/presets/sss/whole_milk.py")
 
-                    #bpy.context.object.active_material.use_shadeless = True
 
                 xsmear = 1.25
                 hmag_xelong = 1.0 / np.cos(scanang_rad)
 
-                bpy.context.object.scale = (horizontal_decimation * xsmear * hmag_xelong *
-                                        hmag_xelong, horizontal_decimation * hmag_xelong, 1.0)
+                bpy.context.object.scale = ((horizontal_decimation * xsmear * hmag_xelong * hmag_xelong) / smallFactor, (horizontal_decimation * hmag_xelong) / smallFactor, 1.0 * smallFactor)
                 bpy.ops.object.transform_apply(scale=True)
 
                 # Setup for bonding boxes
@@ -364,10 +359,14 @@ print("Setting up new scene...")
 setup()
 #testObject()
 ObjectCreation()
+print("Converting to clouds...")
 joinObjects()
+print("Creating globe...")
 earthSetup()
+print("Importing AQUA...")
 importModel(aqua)
-boundingBox(originX, originY)
+print("Creating bounding boxes...")
+#boundingBox(originX, originY)
 
 
 print("\nTime(seconds)__________", (time.time()) - startTime)
