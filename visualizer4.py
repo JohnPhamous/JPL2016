@@ -1,5 +1,6 @@
 # Attempting to use the cloud addon
 # Adjust light refractions
+# TODO: Volume density, correct geolocations, add stars to scene
 import bpy, random, argparse, sys, time, pickle, os
 from random import randint
 import numpy as np
@@ -17,8 +18,7 @@ testingObjectSwitch = False
 
 date = "20020906"
 granule = "50"
-# 1 all, 2 every other, 3 skips 2/3
-horizontal_decimation = 7
+horizontal_decimation = 15
 satHeight_km = 715
 kmPerBlend = 300
 verticalMag = 10
@@ -67,7 +67,7 @@ def setup():
     return
 
 
-def earthSetup():
+def sceneSetup():
     # Sets up sphere
     bpy.ops.mesh.primitive_uv_sphere_add(ring_count = 32, segments = 64)
     bpy.context.object.location[0] = 0
@@ -132,6 +132,8 @@ def earthSetup():
     bpy.context.object.active_material.specular_intensity = 0
     bpy.context.object.active_material.alpha = 0.2
     bpy.context.object.active_material.use_transparent_shadows = True
+
+    # Sets up stars
 
     bpy.ops.object.shade_smooth()
     return
@@ -362,7 +364,7 @@ ObjectCreation()
 print("Converting to clouds...")
 joinObjects()
 print("Creating globe...")
-earthSetup()
+sceneSetup()
 print("Importing AQUA...")
 importModel(aqua)
 print("Creating bounding boxes...")
