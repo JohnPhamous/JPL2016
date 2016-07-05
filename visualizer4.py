@@ -1,7 +1,11 @@
-# Attempting to use the cloud addon
-# Adjust light refractions
 # TODO: Volume density, correct geolocations, add stars to scene
-import bpy, random, argparse, sys, time, pickle, os
+import bpy
+import random
+import argparse
+import sys
+import time
+import pickle
+import os
 from random import randint
 import numpy as np
 from math import pi
@@ -31,6 +35,7 @@ layers_tfff = (True, False, False, False, False, False, False, False, False, Fal
 originX = 0
 originY = 0
 
+
 def makeMaterial(name, diffuse, specular, thickness):
     mat = bpy.data.materials.new(name)
     mat.diffuse_color = diffuse
@@ -52,10 +57,11 @@ def setMaterial(obj, mat):
     obj.data.materials.append(mat)
     return
 
+
 def setup():
     # Light source setup
     bpy.ops.object.lamp_add(type='SUN', radius=1, view_align=False,
-                    location=(-1, 20, 18))
+                            location=(-1, 20, 18))
 
     # Camera setup
     if camera1:
@@ -63,13 +69,13 @@ def setup():
         bpy.ops.object.camera_add(
             view_align=True, enter_editmode=False, location=(0, -15, 5))
         bpy.ops.transform.rotate(value=1.16299, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL',
-                             mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+                                 mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
     return
 
 
 def sceneSetup():
     # Sets up sphere
-    bpy.ops.mesh.primitive_uv_sphere_add(ring_count = 32, segments = 64)
+    bpy.ops.mesh.primitive_uv_sphere_add(ring_count=32, segments=64)
     bpy.context.object.location[0] = 0
     bpy.context.object.location[1] = 6.5
     bpy.context.object.location[2] = -101.979
@@ -84,29 +90,30 @@ def sceneSetup():
     bpy.context.object.active_material.use_transparent_shadows = True
     bpy.context.object.active_material.darkness = 0.3
     bpy.context.object.active_material.use_cast_buffer_shadows = False
-    bpy.context.scene.world.horizon_color = (0, 0 ,0)
+    bpy.context.scene.world.horizon_color = (0, 0, 0)
 
     # Applies Earth texture to sphere
-    earthTexturePath = os.path.expanduser('/Users/John/Github/JPL2016/Additionals/Textures/earth2.jpg')
+    earthTexturePath = os.path.expanduser(
+        '/Users/John/Github/JPL2016/Additionals/Textures/earth2.jpg')
     img = bpy.data.images.load(earthTexturePath)
-    tex = bpy.data.textures.new('EarthTexture', type = 'IMAGE')
+    tex = bpy.data.textures.new('EarthTexture', type='IMAGE')
     tex.image = img
     atex = matProperties.texture_slots.add()
     atex.texture = tex
     atex.texture_coords = 'ORCO'
     atex.use_map_color_diffuse = True
-    atex.mapping ='SPHERE'
+    atex.mapping = 'SPHERE'
     bpy.context.object.active_material.use_transparent_shadows = True
 
-
     # Sets up heights of terrain
-    earthBumpTexturePath = os.path.expanduser('/Users/John/Github/JPL2016/Additionals/Textures/bump.jpg')
+    earthBumpTexturePath = os.path.expanduser(
+        '/Users/John/Github/JPL2016/Additionals/Textures/bump.jpg')
     img2 = bpy.data.images.load(earthBumpTexturePath)
-    tex2 = bpy.data.textures.new('BumpTexture', type = 'IMAGE')
+    tex2 = bpy.data.textures.new('BumpTexture', type='IMAGE')
     tex2.image = img2
     atex2 = matProperties.texture_slots.add()
     atex2.texture = tex2
-    atex2.mapping ='SPHERE'
+    atex2.mapping = 'SPHERE'
     atex2.texture_coords = 'ORCO'
     atex2.use_map_color_diffuse = False
     atex2.use_map_normal = True
@@ -114,9 +121,8 @@ def sceneSetup():
     atex2.bump_method = 'BUMP_BEST_QUALITY'
     bpy.context.object.active_material.use_transparent_shadows = True
 
-
     # Sets up atmosphere
-    bpy.ops.mesh.primitive_uv_sphere_add(ring_count = 32, segments = 64)
+    bpy.ops.mesh.primitive_uv_sphere_add(ring_count=32, segments=64)
     bpy.context.object.location[0] = 0
     bpy.context.object.location[1] = 6.5
     bpy.context.object.location[2] = -101.979
@@ -134,8 +140,11 @@ def sceneSetup():
     bpy.context.object.active_material.use_transparent_shadows = True
 
     # Sets up stars
-
-    bpy.ops.object.shade_smooth()
+    bpy.context.scene.world.use_sky_blend = True
+    bpy.context.scene.world.use_sky_real = True
+    bpy.context.scene.world.zenith_color = (0, 0, 0)
+    bpy.context.scene.world.horizon_color = (0, 0.00850224, 0.0252511)
+    # TODO: Add star speckles
     return
 
 
@@ -151,6 +160,7 @@ def randomNum(min, max):
     # Used for test cases
     num = round(random.uniform(min, max), 10)
     return num
+
 
 def testObject():
     bpy.ops.mesh.primitive_cylinder_add(radius=(1), depth=(
@@ -170,12 +180,12 @@ def testObject():
 
 def boundingBox(originX, originY):
     # max is 100 mBar, tropapoz, if under 0 mBar clouds are ignored
-    x = originX
-    y = originY
-    bpy.ops.mesh.primitive_cube_add(radius = 0.5)
+    x = originX - 1
+    y = originY - 1
+    bpy.ops.mesh.primitive_cube_add(radius=0.5)
     boxProperties = makeMaterial('BoundingBox', (red), (0.5, 0.5, 0.5), (1))
     setMaterial(bpy.context.object, boxProperties)
-    bpy.context.object.active_material.type = 'WIRE'
+    bpy.ops.object.modifier_add(type='WIREFRAME')
     bpy.context.object.active_material.use_shadeless = True
     bpy.context.object.active_material.use_shadows = False
     bpy.context.object.active_material.use_ray_shadow_bias = False
@@ -193,15 +203,19 @@ def boundingBox(originX, originY):
             bpy.context.scene.objects.link(obj)
             y += 1
         x += 1
-        y = originY
+        y = originY - 1
     return
+
 
 def importModel(aqua):
     bpy.ops.import_scene.fbx(filepath=aqua, global_scale=0.5)
-    bpy.ops.transform.rotate(value=-0.75, axis=(0, 1, 0), constraint_axis=(False, True, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
+    bpy.ops.transform.rotate(value=-0.75, axis=(0, 1, 0), constraint_axis=(False, True, False), constraint_orientation='GLOBAL',
+                             mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
 
-    bpy.ops.transform.translate(value=(4, 0, 3), constraint_axis=(True, False, True), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
+    bpy.ops.transform.translate(value=(4, 0, 3), constraint_axis=(True, False, True), constraint_orientation='GLOBAL',
+                                mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
     return
+
 
 def joinObjects():
     for ob in bpy.context.scene.objects:
@@ -266,7 +280,7 @@ def ObjectCreation():
     counter = 0
 
     for isc in tqdm(range(horizontal_decimation // 2, 135, horizontal_decimation), desc='Creating objects', leave=True):
-    #for isc in range(10):
+        # for isc in range(10):
 
         cloudTime = time.time()
         ysc_km = (isc - 135.0 / 2.0) * 15.0
@@ -324,7 +338,7 @@ def ObjectCreation():
                 smallFactor = 10
 
                 bpy.ops.mesh.primitive_cylinder_add(radius=(0.02 / smallFactor), depth=(thickness / smallFactor),
-                                            view_align=False, enter_editmode=False, location=(xfp, ysc, (zcl - thickness / 2.0)))
+                                                    view_align=False, enter_editmode=False, location=(xfp, ysc, (zcl - thickness / 2.0)))
 
                 if colorObjectsSwitch:
                     if thickness < .01:
@@ -339,11 +353,11 @@ def ObjectCreation():
                     bpy.context.object.active_material.raytrace_transparency.ior = 1.3
                     bpy.context.object.active_material.raytrace_transparency.fresnel_factor = 1.25
 
-
                 xsmear = 1.25
                 hmag_xelong = 1.0 / np.cos(scanang_rad)
 
-                bpy.context.object.scale = ((horizontal_decimation * xsmear * hmag_xelong * hmag_xelong) / smallFactor, (horizontal_decimation * hmag_xelong) / smallFactor, 1.0 * smallFactor)
+                bpy.context.object.scale = ((horizontal_decimation * xsmear * hmag_xelong * hmag_xelong) /
+                                            smallFactor, (horizontal_decimation * hmag_xelong) / smallFactor, 1.0 * smallFactor)
                 bpy.ops.object.transform_apply(scale=True)
 
                 # Setup for bonding boxes
@@ -359,16 +373,16 @@ print("Clearing original scene...")
 clearScene()
 print("Setting up new scene...")
 setup()
-#testObject()
+# testObject()
 ObjectCreation()
 print("Converting to clouds...")
 joinObjects()
 print("Creating globe...")
 sceneSetup()
 print("Importing AQUA...")
-importModel(aqua)
+#importModel(aqua)
 print("Creating bounding boxes...")
-#boundingBox(originX, originY)
+boundingBox(originX, originY)
 
 
 print("\nTime(seconds)__________", (time.time()) - startTime)
