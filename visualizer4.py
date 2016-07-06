@@ -229,6 +229,9 @@ def joinObjects():
     bpy.ops.cloud.generate_cloud()
     return
 
+def randNum(min, max):
+    randNum = random.randint(min, max)
+    return randNum
 
 def ObjectCreation():
     # can't currently read AIRS HDF files from python 3, so get them from a
@@ -380,9 +383,9 @@ joinObjects()
 print("Creating globe...")
 sceneSetup()
 print("Importing AQUA...")
-#importModel(aqua)
+importModel(aqua)
 print("Creating bounding boxes...")
-boundingBox(originX, originY)
+#boundingBox(originX, originY)
 
 
 print("\nTime(seconds)__________", (time.time()) - startTime)
