@@ -14,11 +14,7 @@ from tqdm import *
 # Used to track how much time elapsed
 startTime = time.time()
 
-camera1 = True
-camera2 = False
-camera3 = False
 colorObjectsSwitch = False
-testingObjectSwitch = False
 
 date = "20020906"
 granule = "50"
@@ -63,13 +59,11 @@ def setup():
     bpy.ops.object.lamp_add(type='SUN', radius=1, view_align=False,
                             location=(-1, 20, 18))
 
-    # Camera setup
-    if camera1:
-        # Front down angle
-        bpy.ops.object.camera_add(
-            view_align=True, enter_editmode=False, location=(0, -15, 5))
-        bpy.ops.transform.rotate(value=1.16299, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL',
-                                 mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+    # Front down angle
+    bpy.ops.object.camera_add(
+        view_align=True, enter_editmode=False, location=(0, -15, 5))
+    bpy.ops.transform.rotate(value=1.16299, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL',
+                             mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
     return
 
 
