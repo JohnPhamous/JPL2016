@@ -18,7 +18,7 @@ colorObjectsSwitch = False
 
 date = "20020906"
 granule = "50"
-horizontal_decimation = 15
+horizontal_decimation = 8
 satHeight_km = 715
 kmPerBlend = 300
 verticalMag = 10
@@ -332,7 +332,7 @@ def ObjectCreation():
 
                 # assume cloud thickness relates to optical depth
                 thickness = 0.02 * opticalDepth
-                smallFactor = 10
+                smallFactor = 1
 
                 bpy.ops.mesh.primitive_cylinder_add(radius=(0.02 / smallFactor), depth=(thickness / smallFactor),
                                                     view_align=False, enter_editmode=False, location=(xfp, ysc, (zcl - thickness / 2.0)))
@@ -373,7 +373,7 @@ setup()
 # testObject()
 ObjectCreation()
 print("Converting to clouds...")
-joinObjects()
+#joinObjects()
 print("Creating globe...")
 sceneSetup()
 print("Importing AQUA...")
