@@ -1,4 +1,5 @@
-# TODO: Volume density, correct geolocations, add stars to scene
+# TODO: How to scale earth, position of sattelite, other geolocation stuff
+# TODO: Add more than 1 granuale, wrap bounding boxes around whole globe
 import bpy
 import random
 import argparse
@@ -73,7 +74,8 @@ def setup():
     bpy.ops.object.constraint_add(type='TRACK_TO')
     bpy.context.object.constraints["Track To"].track_axis = 'TRACK_NEGATIVE_Z'
     bpy.context.object.constraints["Track To"].up_axis = 'UP_Y'
-    bpy.context.object.constraints["Track To"].target = bpy.data.objects["Sphere"]
+    bpy.context.object.constraints[
+        "Track To"].target = bpy.data.objects["Sphere"]
     return
 
 
@@ -233,9 +235,11 @@ def joinObjects():
     bpy.ops.cloud.generate_cloud()
     return
 
+
 def randNum(min, max):
     randNum = random.randint(min, max)
     return randNum
+
 
 def ObjectCreation():
     # can't currently read AIRS HDF files from python 3, so get them from a
@@ -379,18 +383,16 @@ print("\nStarting visualization...")
 print("Clearing original scene...")
 clearScene()
 print("Creating globe...")
+# testObject()
+ObjectCreation()
+print("Converting to clouds...")
+joinObjects()
 sceneSetup()
 print("Setting up new scene...")
 setup()
-# testObject()
-#ObjectCreation()
-print("Converting to clouds...")
-#joinObjects()
 print("Importing AQUA...")
 importModel(aqua)
 print("Creating bounding boxes...")
-#boundingBox(originX, originY)
-
-
+boundingBox(originX, originY)
 print("\nTime(seconds)__________", (time.time()) - startTime)
 print("Granule________________", granule)
