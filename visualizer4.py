@@ -1,5 +1,5 @@
 # TODO: How to scale earth, position of sattelite, other geolocation stuff
-# TODO: Add more than 1 granuale, wrap bounding boxes around whole globe
+# TODO: Add more than 1 granuale, wrap bounding boxes around whole globe, add cylinders vs clouds mode
 import bpy
 import random
 import argparse
@@ -60,7 +60,7 @@ def setup():
     bpy.ops.object.lamp_add(type='SUN', radius=1, view_align=False,
                             location=(-1, 20, 18))
 
-    # Front down angle
+    # Tracking camera
     bpy.ops.object.camera_add(
         view_align=True, enter_editmode=False, location=(0, -15, 5))
     bpy.ops.transform.rotate(value=1.16299, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL',
@@ -69,13 +69,18 @@ def setup():
     bpy.context.object.data.gpu_dof.use_high_quality = True
     bpy.context.object.data.gpu_dof.blades = 6
     bpy.context.object.data.gpu_dof.fstop = 1.4
-
-    # TODO: Camera tracks Globe
     bpy.ops.object.constraint_add(type='TRACK_TO')
     bpy.context.object.constraints["Track To"].track_axis = 'TRACK_NEGATIVE_Z'
     bpy.context.object.constraints["Track To"].up_axis = 'UP_Y'
     bpy.context.object.constraints[
         "Track To"].target = bpy.data.objects["Sphere"]
+
+    # Orthogonal camera
+    bpy.ops.object.camera_add(
+        view_align=True, enter_editmode=False, location=(-15.21, -18.2, 15))
+    bpy.ops.transform.rotate(value=1.01939, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
+    bpy.ops.transform.rotate(value=-0.748799, axis=(0, 0, 1), constraint_axis=(False, False, True), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
+
     return
 
 
