@@ -18,7 +18,7 @@ colorObjectsSwitch = False
 
 date = "20020906"
 granule = "50"
-horizontal_decimation = 8
+horizontal_decimation = 15
 satHeight_km = 715
 kmPerBlend = 300
 verticalMag = 10
@@ -64,6 +64,16 @@ def setup():
         view_align=True, enter_editmode=False, location=(0, -15, 5))
     bpy.ops.transform.rotate(value=1.16299, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL',
                              mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+    bpy.context.object.data.sensor_width = 35
+    bpy.context.object.data.gpu_dof.use_high_quality = True
+    bpy.context.object.data.gpu_dof.blades = 6
+    bpy.context.object.data.gpu_dof.fstop = 1.4
+
+    # TODO: Camera tracks Globe
+    bpy.ops.object.constraint_add(type='TRACK_TO')
+    bpy.context.object.constraints["Track To"].track_axis = 'TRACK_NEGATIVE_Z'
+    bpy.context.object.constraints["Track To"].up_axis = 'UP_Y'
+    bpy.context.object.constraints["Track To"].target = bpy.data.objects["Sphere"]
     return
 
 
@@ -72,10 +82,10 @@ def sceneSetup():
     bpy.ops.mesh.primitive_uv_sphere_add(ring_count=32, segments=64)
     bpy.context.object.location[0] = 0
     bpy.context.object.location[1] = 6.5
-    bpy.context.object.location[2] = -101.979
-    bpy.context.object.scale[0] = 100
-    bpy.context.object.scale[1] = 100
-    bpy.context.object.scale[2] = 100
+    bpy.context.object.location[2] = -201.979
+    bpy.context.object.scale[0] = 200
+    bpy.context.object.scale[1] = 200
+    bpy.context.object.scale[2] = 200
     matProperties = makeMaterial('Globe', (1, 1, 1), (1, 1, 1), (1))
     matProperties.specular_intensity = 0
     setMaterial(bpy.context.object, matProperties)
@@ -119,10 +129,10 @@ def sceneSetup():
     bpy.ops.mesh.primitive_uv_sphere_add(ring_count=32, segments=64)
     bpy.context.object.location[0] = 0
     bpy.context.object.location[1] = 6.5
-    bpy.context.object.location[2] = -101.979
-    bpy.context.object.scale[0] = 101
-    bpy.context.object.scale[1] = 101
-    bpy.context.object.scale[2] = 101
+    bpy.context.object.location[2] = -201.979
+    bpy.context.object.scale[0] = 201
+    bpy.context.object.scale[1] = 201
+    bpy.context.object.scale[2] = 201
     matAtmosphere = makeMaterial('Atmosphere', (0, 0.2, 1), (0, 0, 0), 1)
     setMaterial(bpy.context.object, matAtmosphere)
     bpy.context.object.active_material.use_transparency = True
@@ -368,14 +378,14 @@ def ObjectCreation():
 print("\nStarting visualization...")
 print("Clearing original scene...")
 clearScene()
+print("Creating globe...")
+sceneSetup()
 print("Setting up new scene...")
 setup()
 # testObject()
-ObjectCreation()
+#ObjectCreation()
 print("Converting to clouds...")
 #joinObjects()
-print("Creating globe...")
-sceneSetup()
 print("Importing AQUA...")
 importModel(aqua)
 print("Creating bounding boxes...")
