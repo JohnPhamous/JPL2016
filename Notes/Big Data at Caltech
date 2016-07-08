@@ -1,0 +1,33 @@
+Big-Data Technology Innovation: Hadoop, Real-time, and Machine Learning
+    Hosted by INCOSE LA
+    Presented by Dr. Andy Feng - VP of Architecture at Yahoo
+
+Links
+    http://incose.org/los-angeles
+    http://www.aiaa-space.org/
+    http://www.spaceportla.com/
+    https://yahooresearch.tumblr.com/post/146257394201/science-powering-product-large-scale-query-to-ad
+    https://www.youtube.com/watch?v=uUvLxmsHpr4&list=PLnDbcXCpYZ8lCKExMs8k4PtIbani9ESX3&index=7
+
+Volunteering opportuntites:
+    President@incose-lag.org
+
+Yahoo and Hadoop
+    Big-Data Applications
+        Yahoo's Weather App
+            Images are classified
+                Location, time, and weather are used to determine which image is used
+        Flickr
+            Images are automatically tagged
+            Yahoo Vision Kit
+                    Color and object detection
+Big-Data Innovations
+    Apache Storm
+        Used for real time processing
+        Data is streamed in then each bolt is doing work on the data
+        ? Are each process doing computation on the same data?
+        ? How do you handle scheduling jobs?
+    Apache HBase
+        NoSQL Database for Hadoop
+    CaffeOnSpark
+        http://github.com/yahoo/CaffeOnSpark
