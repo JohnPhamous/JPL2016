@@ -1,4 +1,4 @@
-# 5, mesh copy instead of using ops
+# 5s, solids
 # TODO: How to scale earth, position of sattelite, other geolocation stuff
 # TODO: Add more than 1 granuale, wrap bounding boxes around whole globe, add cylinders vs clouds mode
 import bpy
@@ -44,6 +44,13 @@ def makeMaterial(name, diffuse, specular, thickness):
     mat.specular_shader = 'COOKTORR'
     mat.alpha = thickness
     mat.ambient = 1
+    return mat
+
+def volumeMat(density):
+    mat = bpy.data.materials.new(VolumeMat)
+    mat.volume.transmission_color = (1, 1, 1)
+    mat.volume.density_scale = density
+    mat.volume.light_method = 'SHADED'
     return mat
 
 def setMaterial(obj, mat):
@@ -347,6 +354,7 @@ def ObjectCreation():
                     opticalDepth = np.log(1.0 / (1.0 - frac))
 
                 # Visible optical depth = IR * 4
+                opticalThickness = opticalDepth * 4
 
                 # assume cloud thickness relates to optical depth
                 thickness = 0.02 * opticalDepth
@@ -357,19 +365,6 @@ def ObjectCreation():
                 obj = bpy.context.scene.objects.active.copy()
                 obj.data = bpy.context.scene.objects.active.data.copy()
                 bpy.context.scene.objects.link(obj)
-
-                if colorObjectsSwitch:
-                    if thickness < .01:
-                        thickness * 100
-                    matProperties = makeMaterial(
-                        'White', (1, 1, 1), (0.5, 0.5, 0.5), (thickness * 10))
-                    setMaterial(bpy.context.object, matProperties)
-                    bpy.context.object.active_material.use_transparency = True
-                    bpy.context.object.active_material.transparency_method = 'RAYTRACE'
-                    bpy.context.object.active_material.raytrace_transparency.fresnel = 2
-                    bpy.context.object.active_material.raytrace_transparency.depth = 50
-                    bpy.context.object.active_material.raytrace_transparency.ior = 1.3
-                    bpy.context.object.active_material.raytrace_transparency.fresnel_factor = 1.25
 
                 xsmear = 1.25
                 hmag_xelong = 1.0 / np.cos(scanang_rad)
