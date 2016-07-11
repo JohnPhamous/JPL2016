@@ -1,3 +1,4 @@
+# 5, mesh copy instead of using ops
 # TODO: How to scale earth, position of sattelite, other geolocation stuff
 # TODO: Add more than 1 granuale, wrap bounding boxes around whole globe, add cylinders vs clouds mode
 import bpy
@@ -43,12 +44,6 @@ def makeMaterial(name, diffuse, specular, thickness):
     mat.alpha = thickness
     mat.ambient = 1
     return mat
-
-
-# Color Paremeters
-blue = (0, 0, 1)
-red = (1, 0, 0)
-
 
 def setMaterial(obj, mat):
     obj.data.materials.append(mat)
@@ -194,7 +189,7 @@ def boundingBox(originX, originY):
     x = originX - 1
     y = originY - 1
     bpy.ops.mesh.primitive_cube_add(radius=0.5)
-    boxProperties = makeMaterial('BoundingBox', (red), (0.5, 0.5, 0.5), (1))
+    boxProperties = makeMaterial('BoundingBox', (1, 0, 0), (0.5, 0.5, 0.5), (1))
     setMaterial(bpy.context.object, boxProperties)
     bpy.ops.object.modifier_add(type='WIREFRAME')
     bpy.context.object.active_material.use_shadeless = True
@@ -294,9 +289,11 @@ def ObjectCreation():
     pkl_file.close()
 
     counter = 0
+    bpy.ops.mesh.primitive_cylinder_add(radius=(0.02), depth=(1),
+                                        view_align=False, enter_editmode=False, location=(0, 0, 0))
 
     for isc in tqdm(range(horizontal_decimation // 2, 135, horizontal_decimation), desc='Creating objects', leave=True):
-        # for isc in range(10):
+    #for isc in range(1):
 
         cloudTime = time.time()
         ysc_km = (isc - 135.0 / 2.0) * 15.0
@@ -351,10 +348,14 @@ def ObjectCreation():
 
                 # assume cloud thickness relates to optical depth
                 thickness = 0.02 * opticalDepth
-                smallFactor = 1
+                smallFactor = 200
 
-                bpy.ops.mesh.primitive_cylinder_add(radius=(0.02 / smallFactor), depth=(thickness / smallFactor),
-                                                    view_align=False, enter_editmode=False, location=(xfp, ysc, (zcl - thickness / 2.0)))
+                bpy.context.scene.objects.active.location = (xfp, ysc, (zcl - thickness / 2.0))
+
+                # Copies mesh data
+                obj = bpy.context.scene.objects.active.copy()
+                obj.data = bpy.context.scene.objects.active.data.copy()
+                bpy.context.scene.objects.link(obj)
 
                 if colorObjectsSwitch:
                     if thickness < .01:
@@ -372,9 +373,7 @@ def ObjectCreation():
                 xsmear = 1.25
                 hmag_xelong = 1.0 / np.cos(scanang_rad)
 
-                bpy.context.object.scale = ((horizontal_decimation * xsmear * hmag_xelong * hmag_xelong) /
-                                            smallFactor, (horizontal_decimation * hmag_xelong) / smallFactor, 1.0 * smallFactor)
-                bpy.ops.object.transform_apply(scale=True)
+                bpy.context.object.scale = (((horizontal_decimation * xsmear * hmag_xelong * hmag_xelong) / smallFactor), ((horizontal_decimation * hmag_xelong) / smallFactor), (0.5 / smallFactor))
 
                 # Setup for bonding boxes
                 global originX
@@ -391,13 +390,13 @@ print("Creating globe...")
 # testObject()
 ObjectCreation()
 print("Converting to clouds...")
-joinObjects()
-sceneSetup()
+#joinObjects()
+#sceneSetup()
 print("Setting up new scene...")
-setup()
+#setup()
 print("Importing AQUA...")
-importModel(aqua)
+#importModel(aqua)
 print("Creating bounding boxes...")
-boundingBox(originX, originY)
+#boundingBox(originX, originY)
 print("\nTime(seconds)__________", (time.time()) - startTime)
 print("Granule________________", granule)
