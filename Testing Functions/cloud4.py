@@ -26,15 +26,15 @@ parser.add_argument('--colorby', action='store', default='',
 def makeMaterial(name, diffuse, specular, alpha):
     mat = bpy.data.materials.new(name)
     mat.diffuse_color = diffuse
-    mat.diffuse_shader = 'LAMBERT' 
-    mat.diffuse_intensity = 1.0 
+    mat.diffuse_shader = 'LAMBERT'
+    mat.diffuse_intensity = 1.0
     mat.specular_color = specular
     mat.specular_shader = 'COOKTORR'
     mat.specular_intensity = 0.5
     mat.alpha = alpha
     mat.ambient = 1
     return mat
- 
+
 
 def setMaterial(ob, mat):
     me = ob.data
@@ -172,7 +172,7 @@ def make_clouds():
     global phase_m9999_color, phase_m2_color, phase_m1_color, phase_00_color
     global phase_p1_color, phase_p2_color, phase_p3_color, phase_p4_color
     phase_m9999_color = makeMaterial('Phase-9999', (0.5,0.5,0.5), (0.0,0.0,0.0), 0.25)
-    # From colorbrewer2.org first diverging color scheme 
+    # From colorbrewer2.org first diverging color scheme
     # 7-class for negative; 9-class for positive
     phase_m2_color = makeMaterial('Phase-2', (166./254., 97./254., 26./254.), (0.0,0.0,0.0), 0.25)
     phase_m1_color = makeMaterial('Phase-1', (223./254.,194./254.,125./254.), (0.0,0.0,0.0), 0.25)
@@ -242,7 +242,7 @@ def make_clouds():
 
 	# cloud is a disk
         bpy.ops.mesh.primitive_cylinder_add(radius=0.02, depth=thickness,
-                            view_align=False, 
+                            view_align=False,
                             enter_editmode=False,
                             location=(xfp, ysc, zcl - thickness / 2.0))
         if args.colorby == '':
@@ -266,13 +266,13 @@ def make_clouds():
         # the FOV also gets stretched into an ellipse along the scan direction
         xelong = 1. / np.cos(scanang_rad) # x elongation (flat Earth)
 
-        ob.scale = (horizontal_decimation * xsmear * hmag * xelong, 
+        ob.scale = (horizontal_decimation * xsmear * hmag * xelong,
                     horizontal_decimation * hmag,
                     1.0)
         bpy.ops.object.transform_apply(scale=True)
-      
 
-    
+
+
 if __name__ == "__main__":
 
   # need to trim args because the original list includes the whole blender + python command

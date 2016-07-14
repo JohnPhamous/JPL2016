@@ -19,12 +19,9 @@ startTime = time.time()
 colorObjectsSwitch = False
 
 date = "20020906"
-granule = "50"
-horizontal_decimation = 4
-smallFactor = 100
-satHeight_km = 715
-kmPerBlend = 300
-verticalMag = 10
+granule = "44"
+horizontal_decimation = 1
+factor = 4
 colorScheme = 'cloud_phase_3x3'
 pickleLocation = "/Users/John/GitHub/JPL2016"
 aqua = "/Users/John/Github/JPL2016/Additionals/Models/Aqua.fbx"
@@ -34,6 +31,21 @@ layers_tfff = (True, False, False, False, False, False, False, False, False, Fal
 originX = 0
 originY = 0
 
+parser = argparse.ArgumentParser('Display AIRS clouds in 3D')
+
+parser.add_argument('--date', action='store', dest='date',
+                    default='20020906',
+                    help='date yyyymmdd')
+parser.add_argument('--gran', action='store', dest='gran',
+                    default=50, type=int,
+                    help='granule number [1-240]')
+parser.add_argument('--sub', action='store', dest='subsample',
+                    default=1, type=int,
+                    help='subsampling factor for horizontal decimation [1-5]')
+parser.add_argument('--cirrus', action='store_true', default=False,
+                    help='Plot Kahn cirrus cloud results')
+parser.add_argument('--colorby', action='store', default='',
+                    help='field by which to color clouds')
 
 def makeMaterial(name, diffuse, specular, thickness):
     mat = bpy.data.materials.new(name)
@@ -46,11 +58,12 @@ def makeMaterial(name, diffuse, specular, thickness):
     mat.ambient = 1
     return mat
 
-def volumeMat(density):
-    mat = bpy.data.materials.new(VolumeMat)
+def volumeMat():
+    mat = bpy.data.materials.new('VolumeMat')
     mat.volume.transmission_color = (1, 1, 1)
-    mat.volume.density_scale = density
+    mat.volume.density_scale = 10
     mat.volume.light_method = 'SHADED'
+    mat.volume.step_size = 0.001
     return mat
 
 def setMaterial(obj, mat):
@@ -62,6 +75,12 @@ def setup():
     # Light source setup
     bpy.ops.object.lamp_add(type='SUN', radius=1, view_align=False,
                             location=(-1, 20, 18))
+    bpy.context.object.data.energy = 10
+    bpy.context.object.data.use_specular = False
+    bpy.context.object.data.shadow_method = 'RAY_SHADOW'
+    bpy.context.object.data.shadow_ray_samples = 10
+    bpy.context.object.data.shadow_soft_size = 50
+
 
     # Tracking camera
     bpy.ops.object.camera_add(
@@ -80,10 +99,10 @@ def setup():
 
     # Orthogonal camera
     bpy.ops.object.camera_add(
-        view_align=True, enter_editmode=False, location=(-15.21, -18.2, 15))
+        view_align=True, enter_editmode=False, location=(-15.21, -18.2, 10.5))
     bpy.ops.transform.rotate(value=1.01939, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
     bpy.ops.transform.rotate(value=-0.748799, axis=(0, 0, 1), constraint_axis=(False, False, True), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
-
+    bpy.context.object.data.sensor_width = 79.69
     return
 
 
@@ -91,11 +110,11 @@ def sceneSetup():
     # Sets up sphere
     bpy.ops.mesh.primitive_uv_sphere_add(ring_count=32, segments=64)
     bpy.context.object.location[0] = 0
-    bpy.context.object.location[1] = 6.5
-    bpy.context.object.location[2] = -201.979
-    bpy.context.object.scale[0] = 200
-    bpy.context.object.scale[1] = 200
-    bpy.context.object.scale[2] = 200
+    bpy.context.object.location[1] = 0
+    bpy.context.object.location[2] = -301.979
+    bpy.context.object.scale[0] = 300
+    bpy.context.object.scale[1] = 300
+    bpy.context.object.scale[2] = 300
     matProperties = makeMaterial('Globe', (1, 1, 1), (1, 1, 1), (1))
     matProperties.specular_intensity = 0
     setMaterial(bpy.context.object, matProperties)
@@ -105,6 +124,8 @@ def sceneSetup():
     bpy.context.object.active_material.darkness = 0.3
     bpy.context.object.active_material.use_cast_buffer_shadows = False
     bpy.context.scene.world.horizon_color = (0, 0, 0)
+    bpy.context.object.active_material.diffuse_intensity = 0.05
+
 
     # Applies Earth texture to sphere
     earthTexturePath = os.path.expanduser(
@@ -135,23 +156,23 @@ def sceneSetup():
     atex2.bump_method = 'BUMP_BEST_QUALITY'
     bpy.context.object.active_material.use_transparent_shadows = True
 
-    # Sets up atmosphere
-    bpy.ops.mesh.primitive_uv_sphere_add(ring_count=32, segments=64)
-    bpy.context.object.location[0] = 0
-    bpy.context.object.location[1] = 6.5
-    bpy.context.object.location[2] = -201.979
-    bpy.context.object.scale[0] = 201
-    bpy.context.object.scale[1] = 201
-    bpy.context.object.scale[2] = 201
-    matAtmosphere = makeMaterial('Atmosphere', (0, 0.2, 1), (0, 0, 0), 1)
-    setMaterial(bpy.context.object, matAtmosphere)
-    bpy.context.object.active_material.use_transparency = True
-    bpy.context.object.active_material.transparency_method = 'Z_TRANSPARENCY'
-    bpy.context.object.active_material.raytrace_transparency.fresnel = 1.5
-    bpy.context.object.active_material.raytrace_transparency.fresnel_factor = 2.4
-    bpy.context.object.active_material.specular_intensity = 0
-    bpy.context.object.active_material.alpha = 0.2
-    bpy.context.object.active_material.use_transparent_shadows = True
+    # # Sets up atmosphere
+    # bpy.ops.mesh.primitive_uv_sphere_add(ring_count=32, segments=64)
+    # bpy.context.object.location[0] = 0
+    # bpy.context.object.location[1] = 0
+    # bpy.context.object.location[2] = -301.979
+    # bpy.context.object.scale[0] = 301
+    # bpy.context.object.scale[1] = 301
+    # bpy.context.object.scale[2] = 301
+    # matAtmosphere = makeMaterial('Atmosphere', (0, 0.2, 1), (0, 0, 0), 1)
+    # setMaterial(bpy.context.object, matAtmosphere)
+    # bpy.context.object.active_material.use_transparency = True
+    # bpy.context.object.active_material.transparency_method = 'Z_TRANSPARENCY'
+    # bpy.context.object.active_material.raytrace_transparency.fresnel = 1.5
+    # bpy.context.object.active_material.raytrace_transparency.fresnel_factor = 2.4
+    # bpy.context.object.active_material.specular_intensity = 0
+    # bpy.context.object.active_material.alpha = 0.2
+    # bpy.context.object.active_material.use_transparent_shadows = True
 
     # Sets up stars
     bpy.context.scene.world.use_sky_blend = True
@@ -164,19 +185,15 @@ def sceneSetup():
 
 def clearScene():
     # Clears the current scene
+    print("Clearing scene...")
     for obj in bpy.context.scene.objects:
         bpy.context.scene.objects.unlink(obj)
         bpy.data.objects.remove(obj)
     return
 
 
-def randomNum(min, max):
-    # Used for test cases
-    num = round(random.uniform(min, max), 10)
-    return num
-
-
 def testObject():
+    print("Creating a test object...")
     bpy.ops.mesh.primitive_cylinder_add(radius=(1), depth=(
         1), view_align=False, enter_editmode=False, location=(0, 0, 0))
     matProperties = makeMaterial(
@@ -193,10 +210,11 @@ def testObject():
 
 
 def boundingBox(originX, originY):
+    print("Creating bounding boxes...")
     # max is 100 mBar, tropapoz, if under 0 mBar clouds are ignored
-    x = originX - 1
-    y = originY - 1
-    bpy.ops.mesh.primitive_cube_add(radius=0.5)
+    x = originX
+    y = originY
+    bpy.ops.mesh.primitive_cube_add(radius=(0.5 * factor))
     boxProperties = makeMaterial('BoundingBox', (1, 0, 0), (0.5, 0.5, 0.5), (1))
     setMaterial(bpy.context.object, boxProperties)
     bpy.ops.object.modifier_add(type='WIREFRAME')
@@ -217,11 +235,12 @@ def boundingBox(originX, originY):
             bpy.context.scene.objects.link(obj)
             y += 1
         x += 1
-        y = originY - 1
+        y = originY * factor
     return
 
 
 def importModel(aqua):
+    print("Importing Aqua model...")
     bpy.ops.import_scene.fbx(filepath=aqua, global_scale=0.5)
     bpy.ops.transform.rotate(value=-0.75, axis=(0, 1, 0), constraint_axis=(False, True, False), constraint_orientation='GLOBAL',
                              mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
@@ -231,24 +250,26 @@ def importModel(aqua):
     return
 
 
-def joinObjects():
-    # Commented out, does not work when trying to combine copied meshes
-    '''for ob in bpy.context.scene.objects:
+def joinObjectsSolids():
+    print("Joining objects into 1 mesh...")
+    for ob in tqdm(bpy.context.scene.objects, desc='Joining Objects', leave=True):
         if ob.type == 'MESH':
             ob.select = True
             bpy.context.scene.objects.active = ob
         else:
-            ob.select = False'''
+            ob.select = False
     bpy.ops.object.join()
-    bpy.context.scene.cloud_type = '1'
-    bpy.ops.cloud.generate_cloud()
     return
 
-
-def randNum(min, max):
+def randInt(min, max):
+    print("Generating a random int...")
     randNum = random.randint(min, max)
     return randNum
 
+def randomDouble(min, max):
+    print("Creating a random double...")
+    num = round(random.uniform(min, max), 10)
+    return num
 
 def ObjectCreation():
     # can't currently read AIRS HDF files from python 3, so get them from a
@@ -297,9 +318,17 @@ def ObjectCreation():
         pkl_file, fix_imports=True, encoding='bytes')
     pkl_file.close()
 
+    satHeight_km = 715
+    kmPerBlend = 300
+    verticalMag = 10
     counter = 0
-    bpy.ops.mesh.primitive_cylinder_add(radius=(0.02), depth=(0),
+
+    # Creates original cylinder to be copied for other objects
+    bpy.ops.mesh.primitive_cylinder_add(radius=(0.02), depth=(1),
                                         view_align=False, enter_editmode=False, location=(0, 0, 0))
+    volMat = volumeMat()
+    setMaterial(bpy.context.object, volMat)
+    bpy.context.object.active_material.type = 'VOLUME'
 
     for isc in tqdm(range(horizontal_decimation // 2, 135, horizontal_decimation), desc='Creating objects', leave=True):
     #for isc in range(1):
@@ -353,42 +382,42 @@ def ObjectCreation():
                 else:
                     opticalDepth = np.log(1.0 / (1.0 - frac))
 
+                # Optical Depth is 0:10
                 # Visible optical depth = IR * 4
-                opticalThickness = opticalDepth * 4
-
                 # assume cloud thickness relates to optical depth
                 thickness = 0.02 * opticalDepth
-
-                bpy.context.scene.objects.active.location = (xfp, ysc, (zcl - thickness / 2.0))
 
                 # Copies mesh data
                 obj = bpy.context.scene.objects.active.copy()
                 obj.data = bpy.context.scene.objects.active.data.copy()
                 bpy.context.scene.objects.link(obj)
 
+                # TODO: if thickness is left than 0.01 then do wireframe
+
                 xsmear = 1.25
                 hmag_xelong = 1.0 / np.cos(scanang_rad)
 
-                bpy.context.object.scale = (((horizontal_decimation * xsmear * hmag_xelong * hmag_xelong) / smallFactor), ((horizontal_decimation * hmag_xelong) / smallFactor), (0.5 / smallFactor))
+                bpy.context.object.scale = (((horizontal_decimation * xsmear * hmag_xelong * hmag_xelong) * factor), ((horizontal_decimation * hmag_xelong) * factor), (thickness * factor))
 
+                bpy.context.scene.objects.active.location = (xfp * factor, ysc * factor, (zcl - thickness / 2.0) * factor)
+                #bpy.context.scene.
                 # Setup for bonding boxes
                 global originX
                 global originY
                 if counter == 0:
-                    originX = xfp
-                    originY = ysc
+                    originX = xfp * factor
+                    originY = ysc * factor
                     counter += 1
 
 print("\nStarting visualization...")
 print("Clearing original scene...")
 clearScene()
 print("Creating globe...")
-# testObject()
+#testObject()
 ObjectCreation()
-print("Converting to clouds...")
-joinObjects()
-sceneSetup()
+joinObjectsSolids()
 print("Setting up new scene...")
+sceneSetup()
 setup()
 print("Importing AQUA...")
 #importModel(aqua)
