@@ -96,7 +96,7 @@ def phasecolor(cloud_phase):
   if cloud_phase ==  4:
     return phase_p4_color
 
-def make_clouds():
+def make_clouds(pickle):
   # can't currently read AIRS HDF files from python 3, so get them from a pickle file created using python 2.7
   pkl_file=open('clouds.'+args.date+'G{0:03d}'.format(args.gran)+'.pkl', 'rb')
   CldFrcTot = pickle.load(pkl_file,fix_imports=True,encoding='bytes')

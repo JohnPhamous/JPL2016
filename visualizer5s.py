@@ -1,6 +1,7 @@
 # 5s, solids
 # TODO: How to scale earth, position of sattelite, other geolocation stuff
-# TODO: Add more than 1 granuale, wrap bounding boxes around whole globe, add cylinders vs clouds mode
+# TODO: Add more than 1 granuale, wrap bounding boxes around whole globe,
+# add cylinders vs clouds mode
 import bpy
 import random
 import argparse
@@ -16,14 +17,15 @@ from tqdm import *
 # Used to track how much time elapsed
 startTime = time.time()
 
-colorObjectsSwitch = False
+horizontal_decimation = 1
+factor = 4
 
 date = "20020906"
 granule = "44"
-horizontal_decimation = 1
-factor = 4
 colorScheme = 'cloud_phase_3x3'
 pickleLocation = "/Users/John/GitHub/JPL2016"
+granule1 = 'clouds.20020906G044.pkl'
+granule2 = 'clouds.20020906G050.pkl'
 aqua = "/Users/John/Github/JPL2016/Additionals/Models/Aqua.fbx"
 
 layers_tfff = (True, False, False, False, False, False, False, False, False, False,
@@ -47,7 +49,9 @@ parser.add_argument('--cirrus', action='store_true', default=False,
 parser.add_argument('--colorby', action='store', default='',
                     help='field by which to color clouds')
 
+
 def makeMaterial(name, diffuse, specular, thickness):
+    print("Creating solid material...")
     mat = bpy.data.materials.new(name)
     mat.diffuse_color = diffuse
     mat.diffuse_shader = 'LAMBERT'
@@ -58,7 +62,9 @@ def makeMaterial(name, diffuse, specular, thickness):
     mat.ambient = 1
     return mat
 
+
 def volumeMat():
+    print("Creating aerogel material...")
     mat = bpy.data.materials.new('VolumeMat')
     mat.volume.transmission_color = (1, 1, 1)
     mat.volume.density_scale = 10
@@ -66,47 +72,15 @@ def volumeMat():
     mat.volume.step_size = 0.001
     return mat
 
+
 def setMaterial(obj, mat):
+    print("Applying material...")
     obj.data.materials.append(mat)
     return
 
 
-def setup():
-    # Light source setup
-    bpy.ops.object.lamp_add(type='SUN', radius=1, view_align=False,
-                            location=(-1, 20, 18))
-    bpy.context.object.data.energy = 10
-    bpy.context.object.data.use_specular = False
-    bpy.context.object.data.shadow_method = 'RAY_SHADOW'
-    bpy.context.object.data.shadow_ray_samples = 10
-    bpy.context.object.data.shadow_soft_size = 50
-
-
-    # Tracking camera
-    bpy.ops.object.camera_add(
-        view_align=True, enter_editmode=False, location=(0, -15, 5))
-    bpy.ops.transform.rotate(value=1.16299, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL',
-                             mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
-    bpy.context.object.data.sensor_width = 35
-    bpy.context.object.data.gpu_dof.use_high_quality = True
-    bpy.context.object.data.gpu_dof.blades = 6
-    bpy.context.object.data.gpu_dof.fstop = 1.4
-    bpy.ops.object.constraint_add(type='TRACK_TO')
-    bpy.context.object.constraints["Track To"].track_axis = 'TRACK_NEGATIVE_Z'
-    bpy.context.object.constraints["Track To"].up_axis = 'UP_Y'
-    bpy.context.object.constraints[
-        "Track To"].target = bpy.data.objects["Sphere"]
-
-    # Orthogonal camera
-    bpy.ops.object.camera_add(
-        view_align=True, enter_editmode=False, location=(-15.21, -18.2, 10.5))
-    bpy.ops.transform.rotate(value=1.01939, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
-    bpy.ops.transform.rotate(value=-0.748799, axis=(0, 0, 1), constraint_axis=(False, False, True), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
-    bpy.context.object.data.sensor_width = 79.69
-    return
-
-
 def sceneSetup():
+    print("Setting up globe...")
     # Sets up sphere
     bpy.ops.mesh.primitive_uv_sphere_add(ring_count=32, segments=64)
     bpy.context.object.location[0] = 0
@@ -125,7 +99,6 @@ def sceneSetup():
     bpy.context.object.active_material.use_cast_buffer_shadows = False
     bpy.context.scene.world.horizon_color = (0, 0, 0)
     bpy.context.object.active_material.diffuse_intensity = 0.05
-
 
     # Applies Earth texture to sphere
     earthTexturePath = os.path.expanduser(
@@ -180,6 +153,41 @@ def sceneSetup():
     bpy.context.scene.world.zenith_color = (0, 0, 0)
     bpy.context.scene.world.horizon_color = (0, 0.00850224, 0.0252511)
     # TODO: Add star speckles
+
+    # Light source setup
+    print("Creating sun...")
+    bpy.ops.object.lamp_add(type='SUN', radius=1, view_align=False,
+                            location=(0, 0, 20))
+    bpy.context.object.data.energy = 10
+    bpy.context.object.data.use_specular = False
+    bpy.context.object.data.shadow_method = 'RAY_SHADOW'
+    bpy.context.object.data.shadow_ray_samples = 10
+    bpy.context.object.data.shadow_soft_size = 50
+
+    # Tracking camera
+    print("Creating camera(s)...")
+    bpy.ops.object.camera_add(
+        view_align=True, enter_editmode=False, location=(0, -15, 5))
+    bpy.ops.transform.rotate(value=1.16299, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL',
+                             mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+    bpy.context.object.data.sensor_width = 35
+    bpy.context.object.data.gpu_dof.use_high_quality = True
+    bpy.context.object.data.gpu_dof.blades = 6
+    bpy.context.object.data.gpu_dof.fstop = 1.4
+    bpy.ops.object.constraint_add(type='TRACK_TO')
+    bpy.context.object.constraints["Track To"].track_axis = 'TRACK_NEGATIVE_Z'
+    bpy.context.object.constraints["Track To"].up_axis = 'UP_Y'
+    bpy.context.object.constraints[
+        "Track To"].target = bpy.data.objects["Sphere"]
+
+    # Orthogonal camera
+    bpy.ops.object.camera_add(
+        view_align=True, enter_editmode=False, location=(-15.21, -18.2, 10.5))
+    bpy.ops.transform.rotate(value=1.01939, axis=(1, 0, 0), constraint_axis=(True, False, False), constraint_orientation='GLOBAL',
+                             mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
+    bpy.ops.transform.rotate(value=-0.748799, axis=(0, 0, 1), constraint_axis=(False, False, True), constraint_orientation='GLOBAL',
+                             mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1, release_confirm=True)
+    bpy.context.object.data.sensor_width = 79.69
     return
 
 
@@ -215,7 +223,8 @@ def boundingBox(originX, originY):
     x = originX
     y = originY
     bpy.ops.mesh.primitive_cube_add(radius=(0.5 * factor))
-    boxProperties = makeMaterial('BoundingBox', (1, 0, 0), (0.5, 0.5, 0.5), (1))
+    boxProperties = makeMaterial(
+        'BoundingBox', (1, 0, 0), (0.5, 0.5, 0.5), (1))
     setMaterial(bpy.context.object, boxProperties)
     bpy.ops.object.modifier_add(type='WIREFRAME')
     bpy.context.object.active_material.use_shadeless = True
@@ -261,22 +270,26 @@ def joinObjectsSolids():
     bpy.ops.object.join()
     return
 
+
 def randInt(min, max):
     print("Generating a random int...")
     randNum = random.randint(min, max)
     return randNum
+
 
 def randomDouble(min, max):
     print("Creating a random double...")
     num = round(random.uniform(min, max), 10)
     return num
 
-def ObjectCreation():
+
+def ObjectCreation(granule):
+    print("Creating objects from ", granule)
     # can't currently read AIRS HDF files from python 3, so get them from a
     # pickle file created using python 2.7
     os.chdir(pickleLocation)
     # Pickle stuff by Evan Manning
-    pkl_file = open('clouds.20020906G050.pkl', 'rb')
+    pkl_file = open(granule, 'rb')
     CldFrcTot = pickle.load(pkl_file, fix_imports=True, encoding='bytes')
     CldFrcTot_QC = pickle.load(pkl_file, fix_imports=True, encoding='bytes')
     Latitude = pickle.load(pkl_file, fix_imports=True, encoding='bytes')
@@ -326,19 +339,19 @@ def ObjectCreation():
     # Creates original cylinder to be copied for other objects
     bpy.ops.mesh.primitive_cylinder_add(radius=(0.02), depth=(1),
                                         view_align=False, enter_editmode=False, location=(0, 0, 0))
+
+    # Applies aerogel material
     volMat = volumeMat()
     setMaterial(bpy.context.object, volMat)
     bpy.context.object.active_material.type = 'VOLUME'
 
-    for isc in tqdm(range(horizontal_decimation // 2, 135, horizontal_decimation), desc='Creating objects', leave=True):
-    #for isc in range(1):
+    for isc in tqdm(range(horizontal_decimation // 2, 135, horizontal_decimation), desc='Creating objects for ' + granule, leave=True):
 
         cloudTime = time.time()
         ysc_km = (isc - 135.0 / 2.0) * 15.0
         ysc = ysc_km / kmPerBlend
 
         for ifp in range(horizontal_decimation // 2, 90, horizontal_decimation):
-            # for ifp in range(10):
             # align the "footprint" (cross-track or xtrack) dimension with the x axis.
             # The instrument scans at a constant rate taking an observation every 1.1 degrees,
             # centered on nadir (pointing straight down)
@@ -392,16 +405,16 @@ def ObjectCreation():
                 obj.data = bpy.context.scene.objects.active.data.copy()
                 bpy.context.scene.objects.link(obj)
 
-                # TODO: if thickness is left than 0.01 then do wireframe
-
                 xsmear = 1.25
                 hmag_xelong = 1.0 / np.cos(scanang_rad)
 
-                bpy.context.object.scale = (((horizontal_decimation * xsmear * hmag_xelong * hmag_xelong) * factor), ((horizontal_decimation * hmag_xelong) * factor), (thickness * factor))
+                bpy.context.object.scale = (((horizontal_decimation * xsmear * hmag_xelong * hmag_xelong) * factor), ((
+                    horizontal_decimation * hmag_xelong) * factor), (thickness * factor))
 
-                bpy.context.scene.objects.active.location = (xfp * factor, ysc * factor, (zcl - thickness / 2.0) * factor)
-                #bpy.context.scene.
-                # Setup for bonding boxes
+                bpy.context.scene.objects.active.location = (
+                    xfp * factor, ysc * factor, (zcl - thickness / 2.0) * factor)
+
+                # Setup for bounding boxes
                 global originX
                 global originY
                 if counter == 0:
@@ -409,19 +422,29 @@ def ObjectCreation():
                     originY = ysc * factor
                     counter += 1
 
-print("\nStarting visualization...")
-print("Clearing original scene...")
+
+def renderStill():
+    print("Rendering and saving...")
+    bpy.context.scene.render.use_stamp = True
+    bpy.context.scene.render.stamp_foreground = (1, 1, 1, 1)
+    bpy.context.scene.render.use_stamp_frame = False
+    bpy.context.scene.render.use_stamp_scene = False
+    bpy.context.scene.render.use_stamp_camera = False
+    bpy.context.scene.render.use_stamp_filename = False
+    bpy.context.scene.render.use_stamp_time = False
+    bpy.context.scene.render.use_stamp_note = True
+    bpy.context.scene.render.stamp_note_text = granule1
+    bpy.context.scene.camera = bpy.data.objects['Camera.001']
+    bpy.context.scene.render.filepath = "/Users/John/Desktop/renders/" + \
+        granule1[7:18]
+    bpy.ops.render.render(write_still=True, use_viewport=True)
+
 clearScene()
-print("Creating globe...")
-#testObject()
-ObjectCreation()
+# testObject()
+ObjectCreation(granule1)
 joinObjectsSolids()
-print("Setting up new scene...")
 sceneSetup()
-setup()
-print("Importing AQUA...")
-#importModel(aqua)
-print("Creating bounding boxes...")
-#boundingBox(originX, originY)
+# importModel(aqua)
+# boundingBox(originX, originY)
+renderStill()
 print("\nTime(seconds)__________", (time.time()) - startTime)
-print("Granule________________", granule)
